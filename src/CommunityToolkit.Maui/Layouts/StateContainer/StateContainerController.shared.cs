@@ -143,7 +143,18 @@ sealed class StateContainerController : IDisposable
 				length = 100u;
 			}
 
-			await Task.WhenAll(layout.Children.OfType<View>().Select(view => view.FadeTo(opacity, length))).WaitAsync(token);
+			if (!token.IsCancellationRequested)
+			{
+				token.Register(() =>
+				{
+					foreach (var view in layout.Children.OfType<View>())
+					{
+						view.CancelAnimations();
+					}
+				});
+
+				await Task.WhenAll(layout.Children.OfType<View>().Select(view => view.FadeTo(opacity, length)));
+			}
 		}
 	}
 
